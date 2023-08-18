@@ -1,0 +1,70 @@
+skip_non_tags: true
+
+image:
+  - Visual Studio 2022
+
+install:
+  - set _TROJAN_QT5_BUILD_INFO_=Trojan-Qt5 build from AppVeyor
+  - set QTDIR=C:\Qt\5.15.2\msvc2019\bin
+  - set PYDIR=C:\Python36
+  - set MINGWDIR=C:\MinGW\bin
+  - git clone https://github.com/runtw0/Trojan-Qt5-Libraries.git C:\TQLibraries
+  - cd C:\TQLibraries
+  - 7z x Grpc.7z
+  - 7z x Grpc_debug.7z
+  - set PATH=%QTDIR%;%PYDIR%;%MINGWDIR%;%PATH%;
+  - cd C:\projects\Trojan-Qt5
+
+init:
+  - C:\"Program Files"\"Microsoft Visual Studio"\2022\Community\VC\Auxiliary\Build\vcvars32.bat
+
+build_script:
+  - mkdir build && cd build
+  - qmake CONFIG+=release ..
+  - nmake
+  - cd release
+  - windeployqt trojan-qt5.exe
+  - del *.o *.h *.cpp *.stash *.qrc *.obj *.opt Makefile
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/Trojan-Qt5-Route.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/WinSparkle.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/cares.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/libcrypto-1_1.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/libgcc_s_dw2-1.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/libiconv-2.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/libprotobuf.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/libssl-1_1.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/libzbar-0.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/nfapi.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/trojan-qt5-core.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/zlib1.dll
+  - curl -LO https://github.com/runtw0/Trojan-Qt5-DLL/raw/master/zlibd1.dll
+  - del /f /s /q qtcolorpicker.moc trojan-qt5.exp trojan-qt5.lib trojan-qt5.ilk trojan-qt5*.pdb trojan-qt5_resource.res vc_redist.x86.exe opengl32sw.dll d3dcompiler_47.dll libGLESV2.dll libEGL.dll imageformats\qgif.dll imageformats\qtga.dll imageformats\qtiff.dll imageformats\qwbmp.dll imageformats\qwebp.dll bearer
+  - rmdir bearer
+  - 7z a Trojan-Qt5-Windows.7z *
+  - 7z a Trojan-Qt5-Windows.zip * -xr!*.7z
+  - curl -LO https://github.com/runtw0/Trojan-Qt5/raw/master/LICENSE
+  - curl -LO https://github.com/runtw0/Trojan-Qt5/raw/master/resources/installer.nsi
+  - set NSISDIR=C:\Program Files (x86)\NSIS
+  - set PATH=%NSISDIR%;%PATH%;
+  - makensis installer.nsi
+  - python ..\..\scripts\checksum.py Trojan-Qt5-Windows.7z Trojan-Qt5-Windows.7z.hash
+  - python ..\..\scripts\checksum.py Trojan-Qt5-Windows.zip Trojan-Qt5-Windows.zip.hash
+  - python ..\..\scripts\checksum.py Trojan-Qt5-Windows.exe Trojan-Qt5-Windows.exe.hash
+  - cd ..
+  - cd ..
+
+artifacts:
+- path: 'build\release\Trojan-Qt5-Windows.*'
+  name: Trojan-Qt5
+
+deploy:
+  provider: GitHub
+  description: "Trojan-Qt5 Release"
+  auth_token:
+    secure: CoT7gXuUToqVL09Y9ppjUe21PnCqF0G1b8mlwyQt4SXhMn0ijpaQmO+TG8AfCJV7
+  artifact: Trojan-Qt5
+  draft: false
+  prerelease: false
+  on:
+    branch: master
+    APPVEYOR_REPO_TAG: true
